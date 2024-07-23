@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generar Factura</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            color: #ec0000;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h1, h2 {
+            color: #ec0000;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin: 10px 0 5px;
+            color: #555;
+        }
+
+        input {
+            width: calc(100% - 18px);
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .error-message {
+            color: red;
+            font-size: 14px;
+            margin-top: -10px;
+            display: inline-block;
+            text-align: left;
+        }
+
+        button {
+            background-color: #ec0000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #mensaje_productos {
+            display: none;
+        }
+
+        /* Cambiar color del texto a negro */
+        #cantidad_productos_text {
+            color: black;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@10/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <script>
+        function IngresarProductos() {
+            const cantidadProductos = parseInt(document.getElementById('cantidad_productos').value, 10);
+            const contenedor = document.getElementById('campos_producto');
+            contenedor.innerHTML = '';
+
+            for (let i = 1; i <= cantidadProductos; i++) {
+                const nombreProducto = `<label for="nombre_producto_${i}">Nombre del Producto ${i}:</label>
+                                        <input type="text" id="nombre_producto_${i}" name="nombre_producto_${i}" oninput="validateInput('nombre_producto_${i}', 'mensaje_nombre_producto_${i}')" required>
+                                        <div id="mensaje_nombre_producto_${i}" class="error-message" style="display: none;">Rellene este campo obligatorio</div><br>`;
+
+                const precioProducto = `<label for="precio_producto_${i}">Precio del Producto ${i}:</label>
+                                        <input type="text" id="precio_producto_${i}" name="precio_producto_${i}" oninput="validateInput('precio_producto_${i}', 'mensaje_precio_producto_${i}')" required>
+                                        <div id="mensaje_precio_producto_${i}" class="error-message" style="display: none;">Rellene este campo obligatorio</div><br>`;
+
+                const cantidadProducto = `<label for="cantidad_producto_${i}">Cantidad del Producto ${i}:</label>
+                                          <input type="text" id="cantidad_producto_${i}" name="cantidad_producto_${i}" oninput="validateInput('cantidad_producto_${i}', 'mensaje_cantidad_producto_${i}')" required>
+                                          <div id="mensaje_cantidad_producto_${i}" class="error-message" style="display: none;">Rellene este campo obligatorio</div><br><br>`;
+
+                contenedor.innerHTML += nombreProducto + precioProducto + cantidadProducto;
+            }
+        }
+
+        function validateInput(inputId, mensajeId) {
+            const input = document.getElementById(inputId);
+            const mensaje = document.getElementById(mensajeId);
+
+            if (input.value.trim() === '') {
+                mensaje.style.display = 'inline-block';
+            } else {
+                mensaje.style.display = 'none';
+            }
+        }
+
+        function confirmarGenerarFactura() {
+            // Validar campos del cliente
+            const nombreCliente = document.getElementById('nombre_cliente');
+            const dniCliente = document.getElementById('dni');
+            const telefonoCliente = document.getElementById('telefono_cliente');
+
+            if (nombreCliente.value.trim() === '') {
+                document.getElementById('mensaje_nombre_cliente').style.display = 'inline-block';
+            } else {
+                document.getElementById('mensaje_nombre_cliente').style.display = 'none';
+            }
+
+            if (dniCliente.value.trim() === '') {
+                document.getElementById('mensaje_dni').style.display = 'inline-block';
+            } else {
+                document.getElementById('mensaje_dni').style.display = 'none';
+            }
+
+            if (telefonoCliente.value.trim() === '') {
+                document.getElementById('mensaje_telefono_cliente').style.display = 'inline-block';
+            } else {
+                document.getElementById('mensaje_telefono_cliente').style.display = 'none';
+            }
+
+            // Validar campos de productos
+            const cantidadProductos = parseInt(document.getElementById('cantidad_productos').value, 10);
+            let validacionProductos = true;
+
+            for (let i = 1; i <= cantidadProductos; i++) {
+                validateInput(`nombre_producto_${i}`, `mensaje_nombre_producto_${i}`);
+                validateInput(`precio_producto_${i}`, `mensaje_precio_producto_${i}`);
+                validateInput(`cantidad_producto_${i}`, `mensaje_cantidad_producto_${i}`);
+
+                // Verificar si hay algún campo de producto no llenado
+                if (
+                    document.getElementById(`nombre_producto_${i}`).value.trim() === '' ||
+                    document.getElementById(`precio_producto_${i}`).value.trim() === '' ||
+                    document.getElementById(`cantidad_producto_${i}`).value.trim() === ''
+                ) {
+                    validacionProductos = false;
+                }
+            }
+
+            // Si hay algún campo de producto no llenado, no permitir generar la factura
+            if (!validacionProductos) {
+                // En lugar de la alerta, puedes mostrar un mensaje dentro del formulario
+                document.getElementById('mensaje_productos').style.display = 'inline-block';
+                return;
+            } else {
+                // Ocultar el mensaje si todos los campos de productos están llenos
+                document.getElementById('mensaje_productos').style.display = 'none';
+            }
+
+            // Confirmar generación de factura con SweetAlert2
+            Swal.fire({
+                title: '¿Está seguro de que desea generar la factura?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Sí, generar factura'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Aquí puedes realizar la acción de enviar el formulario
+                    document.forms["facturaForm"].submit();
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+    <img src="https://res.cloudinary.com/dnwzliif9/image/upload/bjazxzcu90eq5dq71ber.jpg" width="100" alt="100">
+
+    <form id="facturaForm" action="/generar_factura" method="post" required>
+
+        <label for="nombre_cliente">Nombre del Cliente:</label>
+        <input type="text" id="nombre_cliente" name="nombre_cliente" oninput="validateInput('nombre_cliente', 'mensaje_nombre_cliente')" required>
+        <div id="mensaje_nombre_cliente" class="error-message" style="display: none;">Rellene este campo obligatorio</div>
+        <br><br>
+
+        <label for="dni">DNI del Cliente:</label>
+        <input type="text" id="dni" name="dni" oninput="validateInput('dni', 'mensaje_dni')" required>
+        <div id="mensaje_dni" class="error-message" style="display: none;">Rellene este campo obligatorio</div>
+        <br><br>
+
+        <label for="telefono_cliente">Teléfono del Cliente:</label>
+        <input type="text" id="telefono_cliente" name="telefono_cliente" oninput="validateInput('telefono_cliente', 'mensaje_telefono_cliente')" required>
+        <div id="mensaje_telefono_cliente" class="error-message" style="display: none;">Rellene este campo obligatorio</div>
+        <br><br>
+
+        <hr>
+        <h2><span id="cantidad_productos_text" style="color: black;">Ingrese la cantidad de productos que desee:</span></h2>
+        <input type="number" id="cantidad_productos" min="1" max="10" value="1">
+        <button type="button" onclick="IngresarProductos()">Ingresar Productos</button><br><br>
+        
+        <div id="campos_producto"></div>
+
+        <div id="mensaje_productos" class="error-message" style="display: none; color: red;">
+            Por favor, complete todos los campos de los productos.
+        </div>
+
+        <input type="button" value="Generar Factura" onclick="confirmarGenerarFactura()">
+    </form>
+</body>
+</html>
